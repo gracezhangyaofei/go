@@ -8,6 +8,16 @@ import (
     "time"
     "sync"
     "io/ioutil"
+    "github.com/qiniu/api.v7/auth/qbox"
+    "github.com/qiniu/api.v7/storage"
+)
+
+var (
+    accessKey = ""
+    secretKey = ""
+    mac = qbox.NewMac(accessKey, secretKey)
+    bucket_domain = ""
+    bucket = ""
 )
 
 var cvalid = make(chan int);
@@ -17,9 +27,13 @@ var wg sync.WaitGroup
 func urlCheck(url string, i int) {
     defer wg.Done()
 
-    // resp, err := client.Get(url)
-    // here got a problem, it's always return 403 but not 200, please double check
-    resp, err := http.Get(url)
+    url="en/5ac21bc220e01a2600196535/1_1_WechatIMG13.jpeg"
+    deadline := time.Now().Add(time.Second * 3600).Unix() //1小时有效期
+    privateAccessURL := storage.MakePrivateURL(mac, bucket_domain, url, deadline)
+    fmt.Println("******************")
+    fmt.Println(privateAccessURL)
+    fmt.Println("******************")
+    resp, err := http.Get(privateAccessURL)
     log.Println(resp.StatusCode)
     log.Println(err)
     defer resp.Body.Close()
@@ -35,6 +49,7 @@ func urlCheck(url string, i int) {
             cvalid <- i
         }
     }
+    fmt.Println("-------------------")
 }
 
 func start(w http.ResponseWriter, r *http.Request) {
